@@ -1,35 +1,29 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import { Notify } from 'notiflix';
 
-let deltaTime = 0;
+import { addLeadingZero } from './helpers/addLeadingZero';
+import { convertMs } from './helpers/convertMs';
 
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
-  minuteIncrement: 10,
+  minuteIncrement: 1,
 
   onClose(selectedDates) {
-    // let sel = fp.selectedDates[0];  ???????????????
-
-    console.log(selectedDates[0]);
-
     const currentDate = new Date();
-    // const deltaTime = selectedDates[0] - currentDate;
-    deltaTime = currentDate - selectedDates[0];
-    return deltaTime;
-    // if (deltaTime > 0) {
-    //   refs.startBtn.disabled = false;
-    //   convertedTime = convertMs(deltaTime);
 
-    //   const convertedDays = addLeadingZero(convertedTime.days);
-    //   const convertedHours = addLeadingZero(convertedTime.hours);
-    //   const convertedMinutes = addLeadingZero(convertedTime.minutes);
-    //   const convertedSeconds = addLeadingZero(convertedTime.seconds);
-    // } else {
-    //   window.alert('Please choose a date in the future');
-    //   refs.startBtn.disabled = true;
-    // }
+    const deltaTime = selectedDates[0] - currentDate;
+
+    if (deltaTime > 0) {
+      refs.startBtn.disabled = false;
+    } else {
+      Notify.failure('Please choose a date in the future', {
+        timeout: 1000,
+      });
+      refs.startBtn.disabled = true;
+    }
   },
 };
 
@@ -42,53 +36,34 @@ const refs = {
   seconds: document.querySelector('.value[data-seconds]'),
 };
 
-// const fp = flatpickr(refs.dateInput, options);
-
-// console.log(options.onClose(fp.selectedDates));
-
 const fp = flatpickr(refs.dateInput, options);
 
-const pp = options.onClose(fp.selectedDates);
-console.log(pp);
+let pickedDate;
+let timeID = 0;
 
 refs.startBtn.disabled = true;
-
 refs.startBtn.addEventListener('click', onStart);
 refs.dateInput.addEventListener('input', onInput);
 
 function onInput(evt) {
-  //   console.log(evt.target.value);
+  pickedDate = new Date(evt.target.value);
 }
 
 function onStart() {
-  setInterval(() => {
-    const currentTime = new Date();
-    // const currentDay = currentTime.getDay();
-    // const currentHour = currentTime.getHours();
-    // const currentMins = currentTime.getMinutes();
-    // const currentSecs = currentTime.getSeconds();
+  timeID = setInterval(() => {
+    const currentDate = new Date();
+    const deltaTime = convertMs(pickedDate - currentDate);
+
+    if (pickedDate - currentDate > 0) {
+      refs.days.textContent = addLeadingZero(deltaTime.days);
+      refs.hours.textContent = addLeadingZero(deltaTime.hours);
+      refs.minutes.textContent = addLeadingZero(deltaTime.minutes);
+      refs.seconds.textContent = addLeadingZero(deltaTime.seconds);
+
+      refs.startBtn.disabled = true;
+    } else if (pickedDate - currentDate <= 0) {
+      clearInterval(timeID);
+      refs.startBtn.disabled = false;
+    }
   }, 1000);
-}
-
-function convertMs(ms) {
-  // Number of milliseconds per unit of time
-  const second = 1000;
-  const minute = second * 60;
-  const hour = minute * 60;
-  const day = hour * 24;
-
-  // Remaining days
-  const days = Math.floor(ms / day);
-  // Remaining hours
-  const hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
-  const minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
-  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
-
-  return { days, hours, minutes, seconds };
-}
-
-function addLeadingZero(value) {
-  return value.toString().padStart(2, '0');
 }
