@@ -63,7 +63,7 @@ function onStart() {
       refs.startBtn.disabled = true;
     } else if (pickedDate - currentDate <= 0) {
       clearInterval(timeID);
-      refs.startBtn.disabled = false;
+      // refs.startBtn.disabled = false;
     }
   }, 1000);
 }
